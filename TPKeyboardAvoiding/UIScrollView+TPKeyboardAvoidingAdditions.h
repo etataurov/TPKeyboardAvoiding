@@ -8,6 +8,11 @@
 
 #import <UIKit/UIKit.h>
 
+@interface TPKeyboardAvoidingConfig : NSObject
+    @property (nonatomic, assign) BOOL    useMinimumPadding;
+    @property (nonatomic, assign) CGFloat minimumScrollOffsetPadding;
+@end
+
 @interface UIScrollView (TPKeyboardAvoidingAdditions)
 - (BOOL)TPKeyboardAvoiding_focusNextTextField;
 - (void)TPKeyboardAvoiding_scrollToActiveTextField;

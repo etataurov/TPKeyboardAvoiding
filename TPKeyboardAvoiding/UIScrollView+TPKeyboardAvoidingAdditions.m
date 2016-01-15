@@ -14,6 +14,7 @@ static const CGFloat kCalculatedContentPadding = 10;
 static const CGFloat kMinimumScrollOffsetPadding = 20;
 
 static const int kStateKey;
+static const int kConfigKey;
 
 #define _UIKeyboardFrameEndUserInfoKey (&UIKeyboardFrameEndUserInfoKey != NULL ? UIKeyboardFrameEndUserInfoKey : @"UIKeyboardBoundsUserInfoKey")
 
@@ -40,6 +41,19 @@ static const int kStateKey;
 #endif
     }
     return state;
+}
+
+- (TPKeyboardAvoidingConfig*)keyboardAvoidingConfig {
+    TPKeyboardAvoidingConfig *config = objc_getAssociatedObject(self, &kConfigKey);
+    if ( !config ) {
+        config = [[TPKeyboardAvoidingConfig alloc] init];
+        config.minimumScrollOffsetPadding = kMinimumScrollOffsetPadding;
+        objc_setAssociatedObject(self, &kConfigKey, config, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+#if !__has_feature(objc_arc)
+        [config release];
+#endif
+    }
+    return config;
 }
 
 - (void)TPKeyboardAvoiding_keyboardWillShow:(NSNotification*)notification {
@@ -329,12 +343,18 @@ static const int kStateKey;
     CGFloat offset = 0.0;
 
     CGRect subviewRect = [view convertRect:view.bounds toView:self];
-    
-    // Attempt to center the subview in the visible space, but if that means there will be less than kMinimumScrollOffsetPadding
-    // pixels above the view, then substitute kMinimumScrollOffsetPadding
-    CGFloat padding = (viewAreaHeight - subviewRect.size.height) / 2;
-    if ( padding < kMinimumScrollOffsetPadding ) {
-        padding = kMinimumScrollOffsetPadding;
+
+    TPKeyboardAvoidingConfig *config = self.keyboardAvoidingConfig;
+    CGFloat padding;
+    if (config.useMinimumPadding) {
+        padding = config.minimumScrollOffsetPadding;
+    } else {
+        // Attempt to center the subview in the visible space, but if that means there will be less than kMinimumScrollOffsetPadding
+        // pixels above the view, then substitute kMinimumScrollOffsetPadding
+        padding = (viewAreaHeight - subviewRect.size.height) / 2;
+        if ( padding < kMinimumScrollOffsetPadding ) {
+            padding = kMinimumScrollOffsetPadding;
+        }
     }
 
     // Ideal offset places the subview rectangle origin "padding" points from the top of the scrollview.
@@ -376,4 +396,7 @@ static const int kStateKey;
 
 
 @implementation TPKeyboardAvoidingState
+@end
+
+@implementation TPKeyboardAvoidingConfig
 @end
